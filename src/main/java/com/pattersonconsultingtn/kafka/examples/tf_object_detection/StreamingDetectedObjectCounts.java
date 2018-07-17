@@ -1,15 +1,27 @@
-package com.pattersonconsultingtn.kafka.examples.Basic;
+package com.pattersonconsultingtn.kafka.examples.tf_object_detection;
 
+
+import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
+import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde;
+import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericData;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.KeyValueMapper;
+import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.kstream.TimeWindows;
+import org.apache.kafka.streams.kstream.ValueJoiner;
+import org.apache.kafka.streams.kstream.ValueMapper;
+import org.apache.kafka.streams.kstream.Windowed;
 import org.apache.kafka.streams.kstream.*;
-import org.apache.kafka.streams.state.*;
-
  
 import java.util.Arrays;
 import java.util.Locale;
@@ -19,85 +31,140 @@ import java.util.concurrent.CountDownLatch;
  
  /**
 
+    #### Examples and References
 
-	Updates:
-
-	(1) topic creation for input
-
-bin/kafka-topics.sh --create \
-    --zookeeper localhost:2181 \
-    --replication-factor 1 \
-    --partitions 1 \
-    --topic streams-plaintext-input
+        https://github.com/confluentinc/kafka-streams-examples/blob/4.1.1-post/src/main/java/io/confluent/examples/streams/PageViewRegionExample.java
 
 
-	(2) topic creation for output
+    ###### To Run this Demo ######
 
-bin/kafka-topics.sh --create \
-    --zookeeper localhost:2181 \
-    --replication-factor 1 \
-    --partitions 1 \
-    --topic streams-wordcount-output \
-    --config cleanup.policy=compact
+	
 
-    (3) Start the Streaming App
+        Quick Start
 
-        mvn exec:java -Dexec.mainClass=com.pattersonconsultingtn.kafka.examples.WordCountExample
+        # (1) Start Zookeeper. Since this is a long-running service, you should run it in its own terminal.
+        $ ./bin/zookeeper-server-start ./etc/kafka/zookeeper.properties
 
-	(4) kafka producer setup from console
+        # (2) Start Kafka, also in its own terminal.
+        $ ./bin/kafka-server-start ./etc/kafka/server.properties
 
-	bin/kafka-console-producer.sh --broker-list localhost:9092 --topic streams-plaintext-input
+        # (3) Start the Schema Registry, also in its own terminal.
+        ./bin/schema-registry-start ./etc/schema-registry/schema-registry.properties
 
-	(5) kafka consumer setup from console
 
-bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 \
-    --topic streams-wordcount-output \
-    --from-beginning \
-    --formatter kafka.tools.DefaultMessageFormatter \
-    --property print.key=true \
-    --property print.value=true \
-    --property key.deserializer=org.apache.kafka.common.serialization.StringDeserializer \
-    --property value.deserializer=org.apache.kafka.common.serialization.LongDeserializer
+
+        // (4) Create topic in Kafka
+
+        ./bin/kafka-topics --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic detected_cv_objects
+
+        # detected_cv_objects_counts
+
+        ./bin/kafka-topics --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic detected_cv_objects_counts
+
+
+        // (5) Start the Streaming App
+
+            mvn exec:java -Dexec.mainClass=com.pattersonconsultingtn.kafka.examples.tf_object_detection.StreamingDetectedObjectCounts
+
+
+        // (6) Run the producer from maven
+
+        mvn exec:java -Dexec.mainClass="com.pattersonconsultingtn.kafka.examples.tf_object_detection.ObjectDetectionProducer" \
+          -Dexec.args="10 http://localhost:8081 /tmp/"
+
+
+
+
+    	// (7) kafka consumer setup from console
+
+            bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 \
+                --topic detected_cv_objects_counts \
+                --from-beginning \
+                --formatter kafka.tools.DefaultMessageFormatter \
+                --property print.key=true \
+                --property print.value=true \
+                --property key.deserializer=org.apache.kafka.common.serialization.StringDeserializer \
+                --property value.deserializer=org.apache.kafka.common.serialization.LongDeserializer
 
  */
-public class WordCountExample {
+public class StreamingDetectedObjectCounts {
  
     public static void main(String[] args) throws Exception {
         
+        // Streams properties ----- 
         Properties props = new Properties();
-        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "streams-wordcount");
+        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "pct-cv-detected-object-count-app");
+        props.put(StreamsConfig.CLIENT_ID_CONFIG, "pct-cv-detected-object-count-client");
+
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
-        props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
+
+        props.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, "localhost:2181");
+        // Where to find the Confluent schema registry instance(s)
+        props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, "http://localhost:8081");
+        // Specify default (de)serializers for record keys and for record values.
+        props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+        props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, GenericAvroSerde.class);
+        //props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
+        //props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
 
         //final Serde<String> stringSerde = Serdes.String();
         //final Serde<Long> longSerde = Serdes.Long();
  
         final StreamsBuilder builder = new StreamsBuilder();
  
-        KStream<String, String> source = builder.stream("streams-plaintext-input");
+        /*
+            General stream processing topology for getting summation of objects coming:
 
-        KTable<String, Long> counts = source.flatMapValues(new ValueMapper<String, Iterable<String>>() {
+                (1) map the generic records by the "class_name" field
+                (2) groupByKey() // groups records by class_name
+                (3) count( "key" ) // get counts per key
+                (4) mapValues() // ???
+
+
+
+        */
+
+        //KStream<String, String> source = builder.stream("detected_cv_objects_avro");
+
+        //KTable<String, Long> counts = source.
+/*
+        flatMapValues(new ValueMapper<String, Iterable<String>>() {
             @Override
             public Iterable<String> apply(String value) {
                 return Arrays.asList(value.split("\\W+"));
             }
-        }).groupBy(new KeyValueMapper<String, String, String>() {
-                           @Override
-                           public String apply(String key, String value) {
-                               return value;
-                           }
-                        })        
-              .count(); //Materialized.<String, Long, KeyValueStore<Bytes, byte[]>>as("counts-store"))
+        })
+*/
+
+        // Create a stream of object detection events from the detected_cv_objects_avro topic, where the key of
+        // a record is assumed to be the camera-id and the value an Avro GenericRecord
+        // that represents the full details of the object detected in an image. 
+
+        final KStream<String, GenericRecord> detectedObjectsKStream = builder.stream("detected_cv_objects_avro");
+
+        // Create a keyed stream of object-detect events from the detectedObjectsKStream stream,
+        // by extracting the class_name (String) from the Avro value
+        final KStream<String, GenericRecord> detectedObjectsKeyedByClassname = detectedObjectsKStream.map(new KeyValueMapper<String, GenericRecord, KeyValue<String, GenericRecord>>() {
+          @Override
+          public KeyValue<String, GenericRecord> apply(final String cameraID, final GenericRecord record) {
+            return new KeyValue<>(record.get("class_name").toString(), record);
+          }
+        });
+
+        KGroupedStream<String, GenericRecord> groupedDetectedObjectStream = detectedObjectsKeyedByClassname.groupByKey();
+        
+        KTable<String, Long> detectedObjectCounts = groupedDetectedObjectStream.count(); 
+
+        KStream<String, Long> detectedObjectCountsStream = detectedObjectCounts.toStream();
               
-              counts.toStream().to("streams-wordcount-output", Produced.with(Serdes.String(), Serdes.Long()));
+        detectedObjectCountsStream.to("detected_cv_objects_counts", Produced.with(Serdes.String(), Serdes.Long()));
  
-        final Topology topology = builder.build();
-        final KafkaStreams streams = new KafkaStreams(topology, props);
+        //final Topology topology = ;
+        final KafkaStreams streams = new KafkaStreams(builder.build(), props);
         final CountDownLatch latch = new CountDownLatch(1);
  
         // ... same as Pipe.java above
-        Runtime.getRuntime().addShutdownHook(new Thread("streams-wordcount-shutdown-hook") {
+        Runtime.getRuntime().addShutdownHook(new Thread("pct-object-count-shutdown-hook") {
             @Override
             public void run() {
                 streams.close();

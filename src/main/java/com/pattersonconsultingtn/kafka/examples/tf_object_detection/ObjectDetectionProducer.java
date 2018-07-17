@@ -76,7 +76,7 @@ public class ObjectDetectionProducer {
 
   private Producer<String, GenericRecord> producer = null;
   private Schema schema = null;
-  private final String topicName = "detected_cv_objects";
+  private final String topicName = "detected_cv_objects_avro";
   private final String topicKey = "camera_0"; // sensorID
   private final String schemaString = "{\"namespace\": \"com.pattersonconsulting.kafka.avro\", " +
                             "\"type\": \"record\", " +
