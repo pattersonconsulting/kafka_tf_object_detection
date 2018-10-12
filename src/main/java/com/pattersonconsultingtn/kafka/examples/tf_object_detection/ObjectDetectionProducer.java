@@ -67,7 +67,7 @@ mvn exec:java -Dexec.mainClass="com.pattersonconsultingtn.kafka.examples.tf_obje
 
 
 // (6) check topic for entries
-./bin/kafka-avro-console-consumer --zookeeper localhost:2181 --topic detected_cv_objects --from-beginning
+./bin/kafka-avro-console-consumer --zookeeper localhost:2181 --topic shopping_cart_objects --from-beginning
 
 
 
@@ -76,7 +76,7 @@ public class ObjectDetectionProducer {
 
   private Producer<String, GenericRecord> producer = null;
   private Schema schema = null;
-  private final String topicName = "detected_cv_objects_avro";
+  private final String topicName = "shopping_cart_objects";
   private final String topicKey = "camera_0"; // sensorID
   private final String schemaString = "{\"namespace\": \"com.pattersonconsulting.kafka.avro\", " +
                             "\"type\": \"record\", " +

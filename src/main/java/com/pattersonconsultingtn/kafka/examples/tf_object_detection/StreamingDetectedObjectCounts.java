@@ -53,13 +53,13 @@ import java.util.concurrent.CountDownLatch;
 
 
 
-        // (4) Create topic in Kafka
+        // (4) create topic for incoming objects
 
-        ./bin/kafka-topics --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic detected_cv_objects_avro
+        ./bin/kafka-topics --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic shopping_cart_objects
 
-        # detected_cv_objects_counts
+        # create topic for aggregate counts
 
-        ./bin/kafka-topics --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic detected_cv_objects_counts_2
+        ./bin/kafka-topics --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic aggregate_cart_objects
 
 
         // (5) Start the Streaming App
@@ -70,7 +70,7 @@ import java.util.concurrent.CountDownLatch;
         // (6) Run the producer from maven
 
         mvn exec:java -Dexec.mainClass="com.pattersonconsultingtn.kafka.examples.tf_object_detection.ObjectDetectionProducer" \
-          -Dexec.args="10 http://localhost:8081 /tmp/"
+          -Dexec.args="10 http://localhost:8081 ./src/main/resources/cart_images/"
 
 
 
@@ -78,7 +78,7 @@ import java.util.concurrent.CountDownLatch;
     	// (7) kafka consumer setup from console
 
 ./bin/kafka-console-consumer --bootstrap-server localhost:9092 \
---topic detected_cv_objects_counts_2 \
+--topic aggregate_cart_objects \
 --from-beginning \
 --formatter kafka.tools.DefaultMessageFormatter \
 --property print.key=true \
@@ -87,13 +87,13 @@ import java.util.concurrent.CountDownLatch;
 --property value.deserializer=org.apache.kafka.common.serialization.LongDeserializer
 
 
-bin/kafka-console-consumer --topic detected_cv_objects_counts_2 --from-beginning \
+bin/kafka-console-consumer --topic aggregate_cart_objects --from-beginning \
 --new-consumer --bootstrap-server localhost:9092 \
 --property print.key=true \
 --property print.value=true \
 --property value.deserializer=org.apache.kafka.common.serialization.LongDeserializer
 
-bin/kafka-console-consumer --topic detected_cv_objects_counts_2 --from-beginning \
+bin/kafka-console-consumer --topic aggregate_cart_objects --from-beginning \
 --new-consumer --bootstrap-server localhost:9092 \
 --property print.key=true \
 --property print.value=true \
@@ -104,13 +104,16 @@ bin/kafka-console-consumer --topic detected_cv_objects_counts_2 --from-beginning
 
  */
 public class StreamingDetectedObjectCounts {
+
+    final static public String sourceTopicName = "shopping_cart_objects";
+    final static public String aggregateDestTopicName = "aggregate_cart_objects";
  
     public static void main(String[] args) throws Exception {
         
         // Streams properties ----- 
         Properties props = new Properties();
-        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "pct-cv-detected-object-count-app");
-        props.put(StreamsConfig.CLIENT_ID_CONFIG, "pct-cv-detected-object-count-client");
+        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "KafkaStreamingCartObjectAggregatorApp");
+        props.put(StreamsConfig.CLIENT_ID_CONFIG, "KafkaStreamingCartObjectAggregatorApp_Client");
 
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
 
@@ -144,7 +147,7 @@ public class StreamingDetectedObjectCounts {
         // a record is assumed to be the camera-id and the value an Avro GenericRecord
         // that represents the full details of the object detected in an image. 
 
-        final KStream<String, GenericRecord> detectedObjectsKStream = builder.stream("detected_cv_objects_avro");
+        final KStream<String, GenericRecord> detectedObjectsKStream = builder.stream( sourceTopicName );
 
         // Create a keyed stream of object-detect events from the detectedObjectsKStream stream,
         // by extracting the class_name (String) from the Avro value
@@ -160,21 +163,20 @@ public class StreamingDetectedObjectCounts {
 
         KGroupedStream<String, GenericRecord> groupedDetectedObjectStream = detectedObjectsKeyedByClassname.groupByKey();
 
-
         KTable<String, Long> detectedObjectCounts = groupedDetectedObjectStream.count(); 
 
         KStream<String, Long> detectedObjectCountsStream = detectedObjectCounts.toStream();
 
-KStream<String, Long> unmodifiedStream = detectedObjectCountsStream.peek(
-    new ForeachAction<String, Long>() {
-      @Override
-      public void apply(String key, Long value) {
-        System.out.println("key=" + key + ", value=" + value);
-      }
-    });        
+        KStream<String, Long> unmodifiedStream = detectedObjectCountsStream.peek(
+            new ForeachAction<String, Long>() {
+              @Override
+              public void apply(String key, Long value) {
+                System.out.println("key=" + key + ", value=" + value);
+              }
+            });        
 
               
-        detectedObjectCountsStream.to("detected_cv_objects_counts_2", Produced.with(Serdes.String(), Serdes.Long()));
+        detectedObjectCountsStream.to( aggregateDestTopicName, Produced.with(Serdes.String(), Serdes.Long()));
  
         //final Topology topology = ;
         final KafkaStreams streams = new KafkaStreams(builder.build(), props);
@@ -191,7 +193,7 @@ KStream<String, Long> unmodifiedStream = detectedObjectCountsStream.peek(
 
 
         try {
-            System.out.println( "Starting TF Object Count Streaming App..." );
+            System.out.println( "Starting TF Object Detection Count Streaming App..." );
             streams.start();
             latch.await();
         } catch (Throwable e) {

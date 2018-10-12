@@ -7,11 +7,11 @@ Associated Blog Post: http://www.pattersonconsultingtn.com/
 
 (1) Start Zookeeper. Since this is a long-running service, you should run it in its own terminal.
 `
-$ ./bin/zookeeper-server-start ./etc/kafka/zookeeper.properties
+./bin/zookeeper-server-start ./etc/kafka/zookeeper.properties
 `
 (2) Start Kafka, also in its own terminal.
 `
-$ ./bin/kafka-server-start ./etc/kafka/server.properties
+./bin/kafka-server-start ./etc/kafka/server.properties
 `
 
 (3) Start the Schema Registry, also in its own terminal.
@@ -22,7 +22,7 @@ $ ./bin/kafka-server-start ./etc/kafka/server.properties
 (4) Create topic in Kafka
 `
 ./bin/kafka-topics --create --zookeeper localhost:2181 --replication-factor 1 \
-                   --partitions 1 --topic detected_cv_objects
+                   --partitions 1 --topic shopping_cart_objects
 `
 
 (5) Run the producer from maven

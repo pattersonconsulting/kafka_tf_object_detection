@@ -1,0 +1,240 @@
+/Users/josh/Documents/PCT/data/images
+
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/shopping_test_3.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/ssd_inception_v2_coco_2017_11_17/saved_model/
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/basket_test_4.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/ssd_inception_v2_coco_2017_11_17/saved_model/
+
+-----------------------------------------------
+* /Users/josh/Documents/PCT/data/images/basket_test_4.jpg
+	Found scissors             (score: 0.8750)
+Box: 0.6018568, 0.45413062, 0.9033196, 0.8081702
+	Found fork                 (score: 0.8255)
+Box: 0.1912178, 0.34774798, 0.49781144, 0.8067083
+	Found knife                (score: 0.5810)
+Box: 0.3836378, 0.12517098, 0.53532684, 0.7625663
+
+(WTF)
+
+
+
+/Users/josh/Documents/PCT/ml_models/ssdlite_mobilenet_v2_coco_2018_05_09
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/shopping_test_3.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/ssdlite_mobilenet_v2_coco_2018_05_09/saved_model/
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/shopping_test_5.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/ssdlite_mobilenet_v2_coco_2018_05_09/saved_model/
+
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/basket_test_1.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/ssdlite_mobilenet_v2_coco_2018_05_09/saved_model/
+
+found cake?!?!
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/basket_test_0.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/ssdlite_mobilenet_v2_coco_2018_05_09/saved_model/
+
+// found nothing!!
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/basket_test_2.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/ssdlite_mobilenet_v2_coco_2018_05_09/saved_model/
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/basket_test_4.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/ssdlite_mobilenet_v2_coco_2018_05_09/saved_model/
+
+* /Users/josh/Documents/PCT/data/images/basket_test_4.jpg
+No objects detected with a high enough score.
+
+
+
+
+
+
+
+
+/Users/josh/Documents/PCT/ml_models/mask_rcnn_resnet50_atrous_coco_2018_01_28
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/shopping_test_2.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/mask_rcnn_resnet50_atrous_coco_2018_01_28/saved_model/
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/shopping_test_3.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/mask_rcnn_resnet50_atrous_coco_2018_01_28/saved_model/
+
+	Found tennis racket        (score: 0.9936)
+Box: 0.115645565, 0.43382093, 0.6332293, 0.8464163
+	Found sports ball          (score: 0.8851)
+Box: 0.5842516, 0.23967764, 0.8870091, 0.61079663
+	Found tennis racket        (score: 0.6923)
+Box: 0.103704914, 0.44487366, 0.40775412, 0.7782386
+	Found sports ball          (score: 0.4945)
+
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/shopping_test_4.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/mask_rcnn_resnet50_atrous_coco_2018_01_28/saved_model/
+
+# found 2 wine glases and a bowl
+
+
+ /Users/josh/Documents/PCT/data/images/shopping_test_8.jpg
+	Found sports ball          (score: 0.9704)
+Box: 0.65641344, 0.49371138, 0.9557565, 0.88649124
+	Found skateboard           (score: 0.6171)
+Box: 0.21689314, 0.49548563, 0.62349045, 0.71529603
+	Found baseball glove       (score: 0.5813)
+Box: 0.35822704, 0.094047695, 0.66801137, 0.44165426
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/basket_test_0.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/mask_rcnn_resnet50_atrous_coco_2018_01_28/saved_model/
+
+found nothing
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/basket_test_1.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/mask_rcnn_resnet50_atrous_coco_2018_01_28/saved_model/
+
+found train?!?!?
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/sports_basket_test_0.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/mask_rcnn_resnet50_atrous_coco_2018_01_28/saved_model/
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/basket_test_4.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/mask_rcnn_resnet50_atrous_coco_2018_01_28/saved_model/
+
+-----------------------------------------------
+* /Users/josh/Documents/PCT/data/images/basket_test_4.jpg
+	Found spoon                (score: 0.9225)
+Box: 0.6028476, 0.46546587, 0.89197826, 0.8132242
+	Found fork                 (score: 0.7996)
+Box: 0.22471571, 0.31780472, 0.5215305, 0.8076418
+	Found knife                (score: 0.6793)
+Box: 0.3786689, 0.0977739, 0.49621344, 0.4012316
+	Found skis                 (score: 0.5107)
+Box: 0.20490023, 0.15416756, 0.5079366, 0.8201078
+
+
+
+
+
+
+
+
+########################################
+/Users/josh/Documents/PCT/ml_models/mask_rcnn_inception_v2_coco_2018_01_28
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/shopping_test_3.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/mask_rcnn_inception_v2_coco_2018_01_28/saved_model/
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/shopping_test_2.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/mask_rcnn_inception_v2_coco_2018_01_28/saved_model/
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/shopping_test_4.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/mask_rcnn_inception_v2_coco_2018_01_28/saved_model/
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/shopping_test_5.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/mask_rcnn_inception_v2_coco_2018_01_28/saved_model/
+
+# only found 1 wine glass
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/shopping_test_8.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/mask_rcnn_inception_v2_coco_2018_01_28/saved_model/
+
+/Users/josh/Documents/PCT/data/images/shopping_test_8.jpg
+	Found sports ball          (score: 0.9949)
+Box: 0.6605445, 0.48277992, 0.9528438, 0.8594089
+	Found baseball glove       (score: 0.7363)
+Box: 0.36875516, 0.09542114, 0.66660637, 0.44305146
+	Found frisbee              (score: 0.7243)
+Box: 0.44557148, 0.47675943, 0.4978645, 0.5480291
+	Found skateboard           (score: 0.7102)
+Box: 0.05193841, 0.44423804, 0.51566714, 0.6791857
+	Found backpack             (score: 0.5612)
+Box: 0.24936037, 0.642425, 0.5042423, 0.865111
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/basket_test_0.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/mask_rcnn_inception_v2_coco_2018_01_28/saved_model/
+
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/basket_test_4.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/mask_rcnn_inception_v2_coco_2018_01_28/saved_model/
+
+-----------------------------------------------
+* /Users/josh/Documents/PCT/data/images/basket_test_4.jpg
+	Found spoon                (score: 0.7338)
+Box: 0.59992594, 0.48242825, 0.8887652, 0.80303985
+	Found scissors             (score: 0.6107)
+Box: 0.19944395, 0.28833112, 0.55970764, 0.83637244
+	Found fork                 (score: 0.5880)
+Box: 0.214734, 0.38030618, 0.52753204, 0.79675317
+
+
+
+##################################
+/Users/josh/Documents/PCT/ml_models/faster_rcnn_resnet101_coco_2018_01_28
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/shopping_test_7.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/faster_rcnn_resnet101_coco_2018_01_28/saved_model/
+
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/shopping_test_8.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/faster_rcnn_resnet101_coco_2018_01_28/saved_model/
+
+-----------------------------------------------
+* /Users/josh/Documents/PCT/data/images/shopping_test_8.jpg
+	Found sports ball          (score: 0.9710)
+Box: 0.6596488, 0.49148226, 0.9438915, 0.87802696
+	Found backpack             (score: 0.6912)
+Box: 0.23651098, 0.6529145, 0.46784267, 0.8651847
+	Found skateboard           (score: 0.5109)
+Box: 0.05525824, 0.45327526, 0.60703504, 0.732497
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/basket_test_3.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/faster_rcnn_resnet101_coco_2018_01_28/saved_model/
+
+
+* /Users/josh/Documents/PCT/data/images/basket_test_3.jpg
+	Found fork                 (score: 0.9488)
+Box: 0.26034316, 0.40119457, 0.5987682, 0.88553154
+	Found knife                (score: 0.9115)
+Box: 0.42657763, 0.168052, 0.6961954, 0.713379
+
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/basket_test_4.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/faster_rcnn_resnet101_coco_2018_01_28/saved_model/
+
+-----------------------------------------------
+* /Users/josh/Documents/PCT/data/images/basket_test_4.jpg
+	Found spoon                (score: 0.9709)
+Box: 0.59820354, 0.44577163, 0.870187, 0.80191886
+	Found fork                 (score: 0.9485)
+Box: 0.20837471, 0.3354777, 0.51850677, 0.7916912
+	Found knife                (score: 0.8967)
+Box: 0.3868074, 0.10832544, 0.54297227, 0.6927622
+
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/shopping_test_5.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/faster_rcnn_resnet101_coco_2018_01_28/saved_model/
+
+found 2 of 5
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/shopping_test_6.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/faster_rcnn_resnet101_coco_2018_01_28/saved_model/
+
+* /Users/josh/Documents/PCT/data/images/shopping_test_6.jpg
+	Found baseball glove       (score: 0.5650)
+Box: 0.09085853, 0.20041701, 0.4449485, 0.4683036
+	Found motorcycle           (score: 0.5230)
+Box: 0.59121346, 0.34415478, 0.9390037, 0.63436824
+	Found baseball glove       (score: 0.5203)
+Box: 0.26409185, 0.62870735, 0.64342594, 0.9321962
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/shopping_test_2.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/faster_rcnn_resnet101_coco_2018_01_28/saved_model/
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/basket_test_5.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/faster_rcnn_resnet101_coco_2018_01_28/saved_model/
+
+scissors found
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/basket_test_6.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/faster_rcnn_resnet101_coco_2018_01_28/saved_model/
+
+got both of them
+
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/basket_test_7.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/faster_rcnn_resnet101_coco_2018_01_28/saved_model/
+
+-----------------------------------------------
+* /Users/josh/Documents/PCT/data/images/basket_test_7.jpg
+	Found scissors             (score: 0.9988)
+Box: 0.3577564, 0.10626538, 0.78027445, 0.61963844
+	Found scissors             (score: 0.9861)
+Box: 0.07731477, 0.12295852, 0.3946317, 0.5875867
+	Found knife                (score: 0.9619)
+Box: 0.40989208, 0.38484758, 0.7352529, 0.85388356
+	Found scissors             (score: 0.8801)
+Box: 0.091135, 0.31018686, 0.36568838, 0.58238876
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/basket_test_8.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/faster_rcnn_resnet101_coco_2018_01_28/saved_model/
+
+got toothbrush
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar  --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --image_file /Users/josh/Documents/PCT/data/images/basket_test_9.jpg --tf_model_file /Users/josh/Documents/PCT/ml_models/faster_rcnn_resnet101_coco_2018_01_28/saved_model/
+
+
+
+java -jar ./target/pct_object_detection_tf-1.0.0.jar --label_map /Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt --tf_model_file /Users/josh/Documents/PCT/ml_models/faster_rcnn_resnet101_coco_2018_01_28/saved_model/ --image_file /Users/josh/Documents/PCT/data/images/basket_test_11.jpg
+
+
+
+
