@@ -22,7 +22,9 @@ import org.apache.kafka.streams.kstream.ValueJoiner;
 import org.apache.kafka.streams.kstream.ValueMapper;
 import org.apache.kafka.streams.kstream.Windowed;
 import org.apache.kafka.streams.kstream.*;
- 
+import org.apache.kafka.streams.kstream.TimeWindows;
+
+import java.util.concurrent.TimeUnit; 
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Properties;
@@ -108,6 +110,13 @@ public class StreamingDetectedObjectCounts {
     final static public String sourceTopicName = "shopping_cart_objects";
     final static public String aggregateDestTopicName = "aggregate_cart_objects";
  
+    // based on the average shopping session taking around 30 minutes ...
+    // A hopping time window with a size of 15 minutes and an advance interval of 5 minute.
+    // The window's name -- the string parameter -- is used to e.g. name the backing state store.
+    static final Long shoppingSaleMinutesWindowSize = TimeUnit.MINUTES.toMillis(15); // min
+    static final Long shoppingSaleMinutesAdvanceSize = TimeUnit.MINUTES.toMillis(5);
+
+
     public static void main(String[] args) throws Exception {
         
         // Streams properties ----- 
@@ -128,6 +137,11 @@ public class StreamingDetectedObjectCounts {
 
         //final Serde<String> stringSerde = Serdes.String();
         //final Serde<Long> longSerde = Serdes.Long();
+
+        //long windowSizeMs = TimeUnit.MINUTES.toMillis(15); // 15 * 60 * 1000L
+        //long advanceMs =    TimeUnit.MINUTES.toMillis(5); // 5 * 60 * 1000L
+        //TimeWindows.of(windowSizeMs).advanceBy(advanceMs);
+
  
         final StreamsBuilder builder = new StreamsBuilder();
  
@@ -155,7 +169,7 @@ public class StreamingDetectedObjectCounts {
           @Override
           public KeyValue<String, GenericRecord> apply(final String cameraID, final GenericRecord record) {
 
-            System.out.println( "debug: " + record.get("class_name") );
+            System.out.println( "debug: '" + record.get("class_name") + "' " );
             
             return new KeyValue<>(record.get("class_name").toString(), record);
           }
@@ -163,7 +177,22 @@ public class StreamingDetectedObjectCounts {
 
         KGroupedStream<String, GenericRecord> groupedDetectedObjectStream = detectedObjectsKeyedByClassname.groupByKey();
 
+        /**
+            here we need to bleed out any old informations so we dont have old shopping data messing up our 
+            real-time info
+
+
+        */
+/*
+        TimeWindowedKStream<String, GenericRecord> windowedGroupedObjectKStream = groupedDetectedObjectStream.windowedBy( 
+                TimeWindows.of( 
+                    TimeUnit.MINUTES.toMillis( shoppingSaleMinutesWindowSize )
+                    .advanceBy(TimeUnit.MINUTES.toMillis( shoppingSaleMinutesAdvanceSize ) )
+                ) 
+            );            
+*/
         KTable<String, Long> detectedObjectCounts = groupedDetectedObjectStream.count(); 
+//        KTable<String, Long> detectedObjectCounts = windowedGroupedObjectKStream.count(); 
 
         KStream<String, Long> detectedObjectCountsStream = detectedObjectCounts.toStream();
 
@@ -171,7 +200,7 @@ public class StreamingDetectedObjectCounts {
             new ForeachAction<String, Long>() {
               @Override
               public void apply(String key, Long value) {
-                System.out.println("key=" + key + ", value=" + value);
+                System.out.println("Post Grouping >> key='" + key + "', value=" + value);
               }
             });        
 
