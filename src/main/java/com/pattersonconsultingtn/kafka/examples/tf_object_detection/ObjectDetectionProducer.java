@@ -111,7 +111,7 @@ public class ObjectDetectionProducer {
   }
 
   public void run(String url, String input_folder) {
-  
+
 
     Properties props = new Properties();
     props.put("bootstrap.servers", "localhost:9092");
@@ -147,7 +147,7 @@ public class ObjectDetectionProducer {
   public void sendDetectedObjectToKakfa( String imgName, int classID, String className, float score, int box_x, int box_y, int box_w, int box_h ) {
 
       GenericRecord detected_object_record = new GenericData.Record( schema );
-      
+
       long runtime = new Date().getTime();
       detected_object_record.put("timestamp", runtime);
       detected_object_record.put("image_name", imgName );
@@ -159,7 +159,7 @@ public class ObjectDetectionProducer {
       detected_object_record.put("box_y", box_y );
       detected_object_record.put("box_w", box_w );
       detected_object_record.put("box_h", box_h );
-      
+
 
       System.out.println( "Sending avro object detection data for: " + imgName );
 
@@ -172,11 +172,11 @@ public class ObjectDetectionProducer {
 
   public void scanAllFilesInDirectory(File file) throws Exception, IOException {
 
-    String modelFile = "/Users/josh/Documents/PCT/ml_models/ssd_inception_v2_coco_2017_11_17/saved_model/";
-    String labelMapFile = "/Users/josh/Documents/workspace/PattersonConsulting/confluent/kafka_tf_object_detection/src/main/resources/mscoco_label_map.pbtxt.txt";
+    String modelFile = "/Users/paulharris/Downloads/ssd_inception_v2_coco_2018_01_28/saved_model/";
+    String labelMapFile = "/Users/paulharris/PattersonConsulting/BigCloudDealz_GreenLightSpecial/src/main/resources/mscoco_label_map.pbtxt.txt";
 
     TFVision_ObjectDetection imageScanner = new TFVision_ObjectDetection();
-    
+
 
     System.out.println( "Scanning all existing files in: " + file );
 
@@ -191,7 +191,7 @@ public class ObjectDetectionProducer {
     for (final File fileEntry : files ) { //file.listFiles()) {
 
         if (fileEntry.isDirectory()) {
-            
+
             // we are not scanning sub-directories in this example...
 
         } else {

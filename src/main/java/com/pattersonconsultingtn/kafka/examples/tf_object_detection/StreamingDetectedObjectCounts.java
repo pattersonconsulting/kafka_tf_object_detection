@@ -23,14 +23,19 @@ import org.apache.kafka.streams.kstream.ValueMapper;
 import org.apache.kafka.streams.kstream.Windowed;
 import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.kstream.TimeWindows;
+import org.apache.kafka.streams.kstream.internals.WindowedDeserializer;
+import org.apache.kafka.streams.kstream.internals.WindowedSerializer;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 
-import java.util.concurrent.TimeUnit; 
+import java.util.concurrent.TimeUnit;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
- 
- 
+import java.util.*;
+
+
  /**
 
     #### Examples and References
@@ -40,7 +45,7 @@ import java.util.concurrent.CountDownLatch;
 
     ###### To Run this Demo ######
 
-	
+
 
         Quick Start
 
@@ -109,7 +114,7 @@ public class StreamingDetectedObjectCounts {
 
     final static public String sourceTopicName = "shopping_cart_objects";
     final static public String aggregateDestTopicName = "aggregate_cart_objects";
- 
+
     // based on the average shopping session taking around 30 minutes ...
     // A hopping time window with a size of 15 minutes and an advance interval of 5 minute.
     // The window's name -- the string parameter -- is used to e.g. name the backing state store.
@@ -118,8 +123,14 @@ public class StreamingDetectedObjectCounts {
 
 
     public static void main(String[] args) throws Exception {
-        
-        // Streams properties ----- 
+
+      StringSerializer stringSerializer = new StringSerializer();
+      StringDeserializer stringDeserializer = new StringDeserializer();
+      WindowedSerializer<String> windowedSerializer = new WindowedSerializer<>(stringSerializer);
+      WindowedDeserializer<String> windowedDeserializer = new WindowedDeserializer<>(stringDeserializer);
+      Serde<Windowed<String>> windowedSerde = Serdes.serdeFrom(windowedSerializer,windowedDeserializer);
+
+        // Streams properties -----
         Properties props = new Properties();
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, "KafkaStreamingCartObjectAggregatorApp");
         props.put(StreamsConfig.CLIENT_ID_CONFIG, "KafkaStreamingCartObjectAggregatorApp_Client");
@@ -142,9 +153,9 @@ public class StreamingDetectedObjectCounts {
         //long advanceMs =    TimeUnit.MINUTES.toMillis(5); // 5 * 60 * 1000L
         //TimeWindows.of(windowSizeMs).advanceBy(advanceMs);
 
- 
+
         final StreamsBuilder builder = new StreamsBuilder();
- 
+
         /*
             General stream processing topology for getting summation of objects coming:
 
@@ -159,7 +170,7 @@ public class StreamingDetectedObjectCounts {
 
         // Create a stream of object detection events from the detected_cv_objects_avro topic, where the key of
         // a record is assumed to be the camera-id and the value an Avro GenericRecord
-        // that represents the full details of the object detected in an image. 
+        // that represents the full details of the object detected in an image.
 
         final KStream<String, GenericRecord> detectedObjectsKStream = builder.stream( sourceTopicName );
 
@@ -170,47 +181,79 @@ public class StreamingDetectedObjectCounts {
           public KeyValue<String, GenericRecord> apply(final String cameraID, final GenericRecord record) {
 
             System.out.println( "debug: '" + record.get("class_name") + "' " );
-            
+
             return new KeyValue<>(record.get("class_name").toString(), record);
           }
         });
 
-        KGroupedStream<String, GenericRecord> groupedDetectedObjectStream = detectedObjectsKeyedByClassname.groupByKey();
-
-        /**
-            here we need to bleed out any old informations so we dont have old shopping data messing up our 
-            real-time info
 
 
-        */
-/*
-        TimeWindowedKStream<String, GenericRecord> windowedGroupedObjectKStream = groupedDetectedObjectStream.windowedBy( 
-                TimeWindows.of( 
-                    TimeUnit.MINUTES.toMillis( shoppingSaleMinutesWindowSize )
-                    .advanceBy(TimeUnit.MINUTES.toMillis( shoppingSaleMinutesAdvanceSize ) )
-                ) 
-            );            
-*/
-        KTable<String, Long> detectedObjectCounts = groupedDetectedObjectStream.count(); 
-//        KTable<String, Long> detectedObjectCounts = windowedGroupedObjectKStream.count(); 
 
-        KStream<String, Long> detectedObjectCountsStream = detectedObjectCounts.toStream();
 
-        KStream<String, Long> unmodifiedStream = detectedObjectCountsStream.peek(
-            new ForeachAction<String, Long>() {
-              @Override
-              public void apply(String key, Long value) {
-                System.out.println("Post Grouping >> key='" + key + "', value=" + value);
-              }
-            });        
 
-              
-        detectedObjectCountsStream.to( aggregateDestTopicName, Produced.with(Serdes.String(), Serdes.Long()));
- 
+
+        // KTable<Windowed<String>, Long> notificationCounts =
+        //   detectedObjectsKeyedByClassname.countByKey(
+        //     TimeWindows.of("notificationCounts", 60000L * 10)
+        //            // "Hop" the windows every minute.
+        //            .advanceBy(60000L)
+        //            // Ignore late values.
+        //            .until(60000L * 10));
+
+
+
+
+        // KTable<Windowed<String>, Long> viewCounts = detectedObjectsKeyedByClassname
+        // // count the clicks per hour, using tumbling windows with a size of one hour
+        // .groupByKey(TimeWindows.of( 60 * 60 * 1000L),Serdes.String()).count();
+
+
+        ////////////////////////////////////
+
+        // When you want to override serdes explicitly/selectively
+        final Map<String, String> serdeConfig = Collections.singletonMap("schema.registry.url",
+                                                                         "http://localhost:8081");
+
+        final Serde<GenericRecord> valueGenericAvroSerde = new GenericAvroSerde();
+        valueGenericAvroSerde.configure(serdeConfig, false);
+
+
+
+        long windowSizeMs = TimeUnit.MINUTES.toMillis(5); // 5 * 60 * 1000L
+        TimeWindows window = TimeWindows.of(windowSizeMs).advanceBy(windowSizeMs);
+
+
+        KTable<Windowed<String>, Long> detectedObjectCounts = detectedObjectsKeyedByClassname
+        .groupByKey(Serialized.with(Serdes.String(), valueGenericAvroSerde))
+        .windowedBy(window)
+        .count();
+
+
+
+        // KGroupedStream<String, GenericRecord> groupedDetectedObjectStream = detectedObjectsKeyedByClassname.groupByKey();
+
+
+
+
+        // KTable<String, Long> detectedObjectCounts = groupedDetectedObjectStream.count();
+
+        KStream<Windowed<String>, Long> detectedObjectCountsStream = detectedObjectCounts.toStream();
+
+        // KStream<String, Long> unmodifiedStream = detectedObjectCountsStream.peek(
+        //     new ForeachAction<String, Long>() {
+        //       @Override
+        //       public void apply(String key, Long value) {
+        //         System.out.println("Post Grouping >> key='" + key + "', value=" + value);
+        //       }
+        //     });
+
+
+        detectedObjectCounts.to(windowedSerde, Serdes.Long(), aggregateDestTopicName);
+
         //final Topology topology = ;
         final KafkaStreams streams = new KafkaStreams(builder.build(), props);
         final CountDownLatch latch = new CountDownLatch(1);
- 
+
         // ... same as Pipe.java above
         Runtime.getRuntime().addShutdownHook(new Thread("pct-object-count-shutdown-hook") {
             @Override
@@ -218,7 +261,7 @@ public class StreamingDetectedObjectCounts {
                 streams.close();
                 latch.countDown();
             }
-        });   
+        });
 
 
         try {

@@ -39,7 +39,7 @@
         <slf4j.version>1.7.12</slf4j.version>
         <junit.version>4.12</junit.version>
         <jcommander.version>1.27</jcommander.version>
-        
+
     </properties>
 
 
@@ -53,7 +53,7 @@
     <version>5.1.6</version>
 </dependency>
 
-        
+
         <dependency>
             <groupId>org.apache.avro</groupId>
             <artifactId>avro</artifactId>
@@ -72,7 +72,7 @@
             <artifactId>kafka-streams</artifactId>
             <version>${kafka.version}</version>
         </dependency>
-            
+
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>kafka-avro-serializer</artifactId>
