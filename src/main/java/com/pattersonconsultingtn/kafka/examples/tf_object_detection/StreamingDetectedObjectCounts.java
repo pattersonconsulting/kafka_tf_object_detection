@@ -124,11 +124,12 @@ public class StreamingDetectedObjectCounts {
 
     public static void main(String[] args) throws Exception {
 
-      StringSerializer stringSerializer = new StringSerializer();
-      StringDeserializer stringDeserializer = new StringDeserializer();
-      WindowedSerializer<String> windowedSerializer = new WindowedSerializer<>(stringSerializer);
-      WindowedDeserializer<String> windowedDeserializer = new WindowedDeserializer<>(stringDeserializer);
-      Serde<Windowed<String>> windowedSerde = Serdes.serdeFrom(windowedSerializer,windowedDeserializer);
+        //Create Serde for Windowed<String> in aggregate Stream
+        StringSerializer stringSerializer = new StringSerializer();
+        StringDeserializer stringDeserializer = new StringDeserializer();
+        WindowedSerializer<String> windowedSerializer = new WindowedSerializer<>(stringSerializer);
+        WindowedDeserializer<String> windowedDeserializer = new WindowedDeserializer<>(stringDeserializer);
+        Serde<Windowed<String>> windowedSerde = Serdes.serdeFrom(windowedSerializer,windowedDeserializer);
 
         // Streams properties -----
         Properties props = new Properties();
@@ -143,17 +144,7 @@ public class StreamingDetectedObjectCounts {
         // Specify default (de)serializers for record keys and for record values.
         props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, GenericAvroSerde.class);
-        //props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
-        //props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
-
-        //final Serde<String> stringSerde = Serdes.String();
-        //final Serde<Long> longSerde = Serdes.Long();
-
-        //long windowSizeMs = TimeUnit.MINUTES.toMillis(15); // 15 * 60 * 1000L
-        //long advanceMs =    TimeUnit.MINUTES.toMillis(5); // 5 * 60 * 1000L
-        //TimeWindows.of(windowSizeMs).advanceBy(advanceMs);
-
-
+      
         final StreamsBuilder builder = new StreamsBuilder();
 
         /*
@@ -186,30 +177,6 @@ public class StreamingDetectedObjectCounts {
           }
         });
 
-
-
-
-
-
-
-        // KTable<Windowed<String>, Long> notificationCounts =
-        //   detectedObjectsKeyedByClassname.countByKey(
-        //     TimeWindows.of("notificationCounts", 60000L * 10)
-        //            // "Hop" the windows every minute.
-        //            .advanceBy(60000L)
-        //            // Ignore late values.
-        //            .until(60000L * 10));
-
-
-
-
-        // KTable<Windowed<String>, Long> viewCounts = detectedObjectsKeyedByClassname
-        // // count the clicks per hour, using tumbling windows with a size of one hour
-        // .groupByKey(TimeWindows.of( 60 * 60 * 1000L),Serdes.String()).count();
-
-
-        ////////////////////////////////////
-
         // When you want to override serdes explicitly/selectively
         final Map<String, String> serdeConfig = Collections.singletonMap("schema.registry.url",
                                                                          "http://localhost:8081");
@@ -218,34 +185,27 @@ public class StreamingDetectedObjectCounts {
         valueGenericAvroSerde.configure(serdeConfig, false);
 
 
-
+        //Window and Step Size
         long windowSizeMs = TimeUnit.MINUTES.toMillis(5); // 5 * 60 * 1000L
+        //Init TimeWindow 
         TimeWindows window = TimeWindows.of(windowSizeMs).advanceBy(windowSizeMs);
 
-
+        
         KTable<Windowed<String>, Long> detectedObjectCounts = detectedObjectsKeyedByClassname
         .groupByKey(Serialized.with(Serdes.String(), valueGenericAvroSerde))
         .windowedBy(window)
         .count();
 
-
-
-        // KGroupedStream<String, GenericRecord> groupedDetectedObjectStream = detectedObjectsKeyedByClassname.groupByKey();
-
-
-
-
-        // KTable<String, Long> detectedObjectCounts = groupedDetectedObjectStream.count();
-
+        //Aggregated Object Counts Stream
         KStream<Windowed<String>, Long> detectedObjectCountsStream = detectedObjectCounts.toStream();
 
-        // KStream<String, Long> unmodifiedStream = detectedObjectCountsStream.peek(
-        //     new ForeachAction<String, Long>() {
-        //       @Override
-        //       public void apply(String key, Long value) {
-        //         System.out.println("Post Grouping >> key='" + key + "', value=" + value);
-        //       }
-        //     });
+        KStream<Windowed<String>, Long> unmodifiedStream = detectedObjectCountsStream.peek(
+            new ForeachAction<Windowed<String>, Long>() {
+              @Override
+              public void apply(Windowed<String> key, Long value) {
+                System.out.println("Post Grouping >> key='" + key + "', value=" + value);
+              }
+            });
 
 
         detectedObjectCounts.to(windowedSerde, Serdes.Long(), aggregateDestTopicName);
