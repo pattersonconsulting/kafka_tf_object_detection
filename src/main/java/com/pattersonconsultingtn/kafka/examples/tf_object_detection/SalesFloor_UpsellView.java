@@ -11,6 +11,8 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -23,6 +25,8 @@ import org.apache.kafka.streams.kstream.TimeWindows;
 import org.apache.kafka.streams.kstream.ValueJoiner;
 import org.apache.kafka.streams.kstream.ValueMapper;
 import org.apache.kafka.streams.kstream.Windowed;
+import org.apache.kafka.streams.kstream.internals.WindowedDeserializer;
+import org.apache.kafka.streams.kstream.internals.WindowedSerializer;
 import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.Consumed;
  
@@ -49,6 +53,13 @@ import java.util.*;
 public class SalesFloor_UpsellView {
  
     public static void main(String[] args) throws Exception {
+
+         //Create Serde for Windowed<String> in aggregate Stream
+         StringSerializer stringSerializer = new StringSerializer();
+         StringDeserializer stringDeserializer = new StringDeserializer();
+         WindowedSerializer<String> windowedSerializer = new WindowedSerializer<>(stringSerializer);
+         WindowedDeserializer<String> windowedDeserializer = new WindowedDeserializer<>(stringDeserializer);
+         Serde<Windowed<String>> windowedSerde = Serdes.serdeFrom(windowedSerializer,windowedDeserializer);
         
         // Streams properties ----- 
         Properties props = new Properties();
@@ -64,46 +75,37 @@ public class SalesFloor_UpsellView {
 //        props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, GenericAvroSerde.class);
         props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
-        //props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
-//        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-
-        //final Serde<String> stringSerde = Serdes.String();
-        //final Serde<Long> longSerde = Serdes.Long();
-
-
-        //final Serde<String> stringSerde = Serdes.String();
-        //final Serde<Long> longSerde = Serdes.Long();
+      
 
 
 
         // We must specify the Avro schemas for all intermediate (Avro) classes, if any.
-        
         final InputStream top_upsells_schemaInputStream = StreamingJoin_CartCountsAndInventoryTopics.class.getClassLoader()
             .getResourceAsStream("avro/com/pattersonconsultingtn/kafka/examples/streams/topcartupsells.avsc");
 
         final Schema top_cart_upsells_schema = new Schema.Parser().parse( top_upsells_schemaInputStream );
 
         System.out.println( "Loaded Schema: " + top_cart_upsells_schema );
-
-
-
- 
+        
         final StreamsBuilder builder = new StreamsBuilder();
- 
 
 
         // key is object name (String), value is the count (Long) in all baskets
-        final KTable<String, Long> aggregate_cart_objects_ktable = builder.table("aggregate_cart_objects", Consumed.with( Serdes.String(), Serdes.Long() ) );
-/*
+        final KTable<Windowed<String>, Long> aggregate_cart_objects_ktable = builder.table("aggregate_cart_objects", Consumed.with( windowedSerde, Serdes.Long() ) );
 
-        KStream<String, Long> unmodifiedStream2 = aggregate_cart_objects_ktable.toStream().peek(
-            new ForeachAction<String, Long>() {
+
+
+
+
+
+        KStream<Windowed<String>, Long> unmodifiedStream2 = aggregate_cart_objects_ktable.toStream().peek(
+            new ForeachAction<Windowed<String>, Long>() {
               @Override
-              public void apply(String key, Long value) {
+              public void apply(Windowed<String> key, Long value) {
                 System.out.println("key=" + key + ", value=" + value);
               }
             });        
-*/
+
 
 
     // When you want to override serdes explicitly/selectively
@@ -137,16 +139,6 @@ public class SalesFloor_UpsellView {
         // this table needs to be re-keyed to do the join
         final KStream<String, GenericRecord> mysql_tables_jdbc_inventory_kStream = builder.stream("mysql_tables_jdbc_inventory", Consumed.with( Serdes.String(), valueGenericAvroSerde ) );
 
-/*
-        KStream<String, GenericRecord> unmodifiedStream = mysql_tables_jdbc_inventory_kStream.peek(
-            new ForeachAction<String, GenericRecord>() {
-              @Override
-              public void apply(String key, GenericRecord value) {
-                System.out.println("Inventory Table --- key=" + key + ", value=" + value);
-              }
-            });        
-*/
-
 
         final KStream<String, GenericRecord> mysql_tables_jdbc_inventory_kstream_keyedOnObject = mysql_tables_jdbc_inventory_kStream.map(new KeyValueMapper<String, GenericRecord, KeyValue<String, GenericRecord>>() {
               @Override
@@ -155,15 +147,6 @@ public class SalesFloor_UpsellView {
                 return new KeyValue<>(record.get("name").toString(), record );
               }
             });
-
-
-
-        // https://stackoverflow.com/questions/49841008/kafka-streams-how-to-set-a-new-key-for-ktable
-        // Because a key must be unique for a KTable (in contrast to a KStream) it's required to specify an aggregation function that aggregates all records with same (new) key into a single value.
-        // KTable rekeyed = KTable.groupBy( .. ).aggregate( ... )
-
-
-
 
 
         /**

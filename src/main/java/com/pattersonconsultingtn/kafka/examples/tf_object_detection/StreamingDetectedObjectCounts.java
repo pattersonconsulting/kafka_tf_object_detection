@@ -25,6 +25,7 @@ import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.kstream.TimeWindows;
 import org.apache.kafka.streams.kstream.internals.WindowedDeserializer;
 import org.apache.kafka.streams.kstream.internals.WindowedSerializer;
+import org.apache.kafka.streams.state.ReadOnlyWindowStore;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
@@ -190,11 +191,23 @@ public class StreamingDetectedObjectCounts {
         //Init TimeWindow 
         TimeWindows window = TimeWindows.of(windowSizeMs).advanceBy(windowSizeMs);
 
-        
         KTable<Windowed<String>, Long> detectedObjectCounts = detectedObjectsKeyedByClassname
         .groupByKey(Serialized.with(Serdes.String(), valueGenericAvroSerde))
         .windowedBy(window)
         .count();
+        // KTable<String, Long> detectedObjectCounts = detectedObjectsKeyedByClassname
+        // .groupByKey(Serialized.with(Serdes.String(), valueGenericAvroSerde))
+        // .map(new KeyValueMapper<String, GenericRecord, KeyValue<String, GenericRecord>>() {
+        //   @Override
+        //   public KeyValue<String, GenericRecord> apply(final String cameraID, final GenericRecord record) {
+
+        //     System.out.println( "debug: '" + record.get("class_name") + "' " );
+
+        //     return new KeyValue<>(record.get("class_name").toString(), record);
+        //   }
+        // })
+        // .windowedBy(window)
+        // .count();
 
         //Aggregated Object Counts Stream
         KStream<Windowed<String>, Long> detectedObjectCountsStream = detectedObjectCounts.toStream();
