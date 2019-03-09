@@ -155,7 +155,7 @@ public class SalesFloor_UpsellView {
             We're using GenericRecord as the output message type, but the Avro schema is different for this record so we have to provide the schema
 
         */
-        KStream<String, GenericRecord> tempAggCountsWithInventoryStream = mysql_tables_jdbc_inventory_kstream_keyedOnObject.join( aggregate_cart_objects_ktable,
+/*        KStream<String, GenericRecord> tempAggCountsWithInventoryStream = mysql_tables_jdbc_inventory_kstream_keyedOnObject.join( aggregate_cart_objects_ktable,
             new ValueJoiner<GenericRecord, Long, GenericRecord>() {
               @Override
               public GenericRecord apply(GenericRecord inventoryRecord, Long aggregateCartCountForObject) {
@@ -235,7 +235,7 @@ public class SalesFloor_UpsellView {
         joinedKTable.toStream().to( "top_cart_upsells", Produced.with( stringSerde, valueGenericAvroSerde ) );
  
 
-
+*/
 
 
         final KafkaStreams streams = new KafkaStreams(builder.build(), props);
