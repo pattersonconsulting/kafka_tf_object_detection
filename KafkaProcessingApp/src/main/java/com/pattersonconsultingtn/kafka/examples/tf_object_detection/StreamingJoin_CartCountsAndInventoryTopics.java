@@ -9,29 +9,29 @@ import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KTable;
-import org.apache.kafka.streams.kstream.KeyValueMapper;
-import org.apache.kafka.streams.kstream.Produced;
-import org.apache.kafka.streams.kstream.TimeWindows;
-import org.apache.kafka.streams.kstream.ValueJoiner;
-import org.apache.kafka.streams.kstream.ValueMapper;
-import org.apache.kafka.streams.kstream.Windowed;
 import org.apache.kafka.streams.kstream.*;
-import org.apache.kafka.streams.Consumed;
- 
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.Properties;
+import org.apache.kafka.streams.kstream.TimeWindows;
+import org.apache.kafka.streams.kstream.Suppressed;
+import org.apache.kafka.streams.kstream.Suppressed.BufferConfig;
+import org.slf4j.LoggerFactory;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.io.InputStream;
-import java.util.*; 
+import java.time.Duration;
+import java.util.*;
+import java.time.format.DateTimeFormatter;
+import java.time.LocalDateTime;
  
  
  /**
@@ -75,7 +75,7 @@ import java.util.*;
         // (6) Run the producer from maven
 
         mvn exec:java -Dexec.mainClass="com.pattersonconsultingtn.kafka.examples.tf_object_detection.ObjectDetectionProducer" \
-          -Dexec.args="10 http://localhost:8081 /tmp/"
+          -Dexec.args="./src/main/resources/cart_images/"
 
 
 
@@ -109,8 +109,14 @@ bin/kafka-console-consumer --topic detected_cv_objects_counts_2 --from-beginning
 
  */
 public class StreamingJoin_CartCountsAndInventoryTopics {
+	
+	final static public String sourceTopicName = "shopping_cart_objects";
+	private static Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
  
     public static void main(String[] args) throws Exception {
+    	
+    	root.setLevel(Level.ERROR);
+    	DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm:ss");
         
         // Streams properties ----- 
         Properties props = new Properties();
@@ -119,7 +125,6 @@ public class StreamingJoin_CartCountsAndInventoryTopics {
 
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
 
-        props.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, "localhost:2181");
         // Where to find the Confluent schema registry instance(s)
         props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, "http://localhost:8081");
         // Specify default (de)serializers for record keys and for record values.
@@ -135,6 +140,16 @@ public class StreamingJoin_CartCountsAndInventoryTopics {
 
         //final Serde<String> stringSerde = Serdes.String();
         //final Serde<Long> longSerde = Serdes.Long();
+        
+        Properties producerProps = new Properties();
+        producerProps.put("bootstrap.servers", "localhost:9092");
+        producerProps.put("acks", "all");
+        producerProps.put("retries", 0);
+        producerProps.put("key.serializer", "io.confluent.kafka.serializers.KafkaAvroSerializer");
+        producerProps.put("value.serializer", "io.confluent.kafka.serializers.KafkaAvroSerializer");
+        producerProps.put("schema.registry.url", "http://localhost:8081");
+        
+        final KafkaProducer producer = new KafkaProducer<String, GenericRecord>(producerProps);
 
 
 
@@ -144,30 +159,9 @@ public class StreamingJoin_CartCountsAndInventoryTopics {
             .getResourceAsStream("avro/com/pattersonconsultingtn/kafka/examples/streams/topcartupsells.avsc");
 
         final Schema top_cart_upsells_schema = new Schema.Parser().parse( top_upsells_schemaInputStream );
-
-        System.out.println( "Loaded Schema: " + top_cart_upsells_schema );
-
-
-
- 
-        final StreamsBuilder builder = new StreamsBuilder();
- 
-
-
-        // key is object name (String), value is the count (Long) in all baskets
-        final KTable<String, Long> aggregate_cart_objects_ktable = builder.table("aggregate_cart_objects", Consumed.with( Serdes.String(), Serdes.Long() ) );
-/*
-
-        KStream<String, Long> unmodifiedStream2 = aggregate_cart_objects_ktable.toStream().peek(
-            new ForeachAction<String, Long>() {
-              @Override
-              public void apply(String key, Long value) {
-                System.out.println("key=" + key + ", value=" + value);
-              }
-            });        
-*/
-
-
+        
+      final StreamsBuilder builder = new StreamsBuilder();
+      
     // When you want to override serdes explicitly/selectively
     final Map<String, String> serdeConfig = Collections.singletonMap("schema.registry.url",
                                                                      "http://localhost:8081");
@@ -178,148 +172,107 @@ public class StreamingJoin_CartCountsAndInventoryTopics {
     valueGenericAvroSerde.configure(serdeConfig, false); // `false` for record values
 
     final Serde<String> stringSerde = Serdes.String();
-    //final Serde<GenericRecord> genericAvroSerde = new GenericAvroSerde();
-    // Note how we must manually call `configure()` on this serde to configure the schema registry
-    // url.  This is different from the case of setting default serdes (see `streamsConfiguration`
-    // above), which will be auto-configured based on the `StreamsConfiguration` instance.
-//    final boolean isKeySerde = false;
-  //  genericAvroSerde.configure(
-    //    Collections.singletonMap(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, CLUSTER.schemaRegistryUrl()),
-      //  isKeySerde);
-
-/*
-        // key is null, record is record from MySQL databse table 'inventory'
-        // this table needs to be re-keyed to do the join
-        final KTable<String, GenericRecord> mysql_tables_jdbc_inventory_ktable = builder.table("mysql_tables_jdbc_inventory", Consumed.with( Serdes.String(), valueGenericAvroSerde ) );
-
-        final KStream<String, GenericRecord> mysql_tables_jdbc_inventory_kstream_keyedOnObject = mysql_tables_jdbc_inventory_ktable.toStream().map(new KeyValueMapper<String, GenericRecord, KeyValue<String, GenericRecord>>() {
-              @Override
-              public KeyValue<String, GenericRecord> apply(final String null_key, final GenericRecord record) {
-
-                System.out.println( "Inventory > Re-Key: " + record.get("name").toString() );
-
-                return new KeyValue<>(record.get("name").toString(), record );
-              }
-            });
-*/
-
-        // key is null, record is record from MySQL databse table 'inventory'
-        // this table needs to be re-keyed to do the join
-        final KStream<String, GenericRecord> mysql_tables_jdbc_inventory_kStream = builder.stream("mysql_tables_jdbc_inventory", Consumed.with( Serdes.String(), valueGenericAvroSerde ) );
-
-/*
-        KStream<String, GenericRecord> unmodifiedStream = mysql_tables_jdbc_inventory_kStream.peek(
-            new ForeachAction<String, GenericRecord>() {
-              @Override
-              public void apply(String key, GenericRecord value) {
-                System.out.println("Inventory Table --- key=" + key + ", value=" + value);
-              }
-            });        
-*/
-
-
-        final KStream<String, GenericRecord> mysql_tables_jdbc_inventory_kstream_keyedOnObject = mysql_tables_jdbc_inventory_kStream.map(new KeyValueMapper<String, GenericRecord, KeyValue<String, GenericRecord>>() {
-              @Override
-              public KeyValue<String, GenericRecord> apply(final String null_key, final GenericRecord record) {
-
-                //System.out.println( "Inventory > Re-Key: " + record.get("name").toString() );
-
-                return new KeyValue<>(record.get("name").toString(), record );
-              }
-            });
-
-
-
-        // https://stackoverflow.com/questions/49841008/kafka-streams-how-to-set-a-new-key-for-ktable
-        // Because a key must be unique for a KTable (in contrast to a KStream) it's required to specify an aggregation function that aggregates all records with same (new) key into a single value.
-        // KTable rekeyed = KTable.groupBy( .. ).aggregate( ... )
-
-
-
-
-
-        KStream<String, GenericRecord> tempAggCountsWithInventoryStream = mysql_tables_jdbc_inventory_kstream_keyedOnObject.join( aggregate_cart_objects_ktable,
-            new ValueJoiner<GenericRecord, Long, GenericRecord>() {
-              @Override
-              public GenericRecord apply(GenericRecord inventoryRecord, Long aggregateCartCountForObject) {
+    
+    
+    
+    // pull in inventory from Kafka topic
+    final KStream<String, GenericRecord> mysql_tables_jdbc_inventory_kstream = builder.stream("mysql_tables_jdbc_inventory", Consumed.with( Serdes.String(), valueGenericAvroSerde ) );
+    
+    // rekey on item name (as inventory from MySQL has null key) and send rekeyed inventory to kafka topic to be read into KTable
+    final KStream<String, GenericRecord> mysql_tables_jdbc_inventory_kstream_keyedOnObject = mysql_tables_jdbc_inventory_kstream.map(new KeyValueMapper<String, GenericRecord, KeyValue<String, GenericRecord>>() {
+    	@Override
+    	public KeyValue<String, GenericRecord> apply(final String null_key, final GenericRecord record) {
+    		String newKey = record.get("name").toString();
+    	    //send rekeyed inventory to kafka topic
+    	    ProducerRecord<String, GenericRecord> data = new ProducerRecord<String, GenericRecord>("inventory_rekeyed", newKey, record);
+    		producer.send(data);
+    	    return new KeyValue<>(newKey, record );
+    		}
+    	});
+    
+    // create new KTable from rekeyed inventory topic
+    final KTable<String, GenericRecord> rekeyed_inventory_ktable = builder.table("inventory_rekeyed", Consumed.with(Serdes.String(), valueGenericAvroSerde ) );
+    
+        
+        // Create a stream of object detection events from the detected_cv_objects_avro topic, where the key of
+        // a record is assumed to be the item name and the value an Avro GenericRecord
+        // that represents the full details of the object detected in an image.
+        final KStream<String, GenericRecord> detectedObjectsKStream = builder.stream(sourceTopicName);
                 
-                // thisis where we have to create a new avro schema for the output intermediate record
+        // join with inventory ktable
+        final KStream<String, GenericRecord> enrichedCartObjects = detectedObjectsKStream
+        		.join( rekeyed_inventory_ktable, new ValueJoiner<GenericRecord, GenericRecord, GenericRecord>() {
+        	@Override
+        	public GenericRecord apply(GenericRecord cartObject, GenericRecord inventoryRecord) {
+          
+        		String cart = cartObject.get("class_name").toString();
+        		String inventory = inventoryRecord.get("name").toString();
+        		String upsell = inventoryRecord.get("upsell_item").toString();
 
-                //System.out.println( "Join: " + inventoryRecord.get("name") + " => " + aggregateCartCountForObject );
+        		// this is where we have to create a new avro schema for the output intermediate record
 
-                    final GenericRecord joinedView = new GenericData.Record( top_cart_upsells_schema );
-                    joinedView.put("item_name", inventoryRecord.get("name") );
-                    joinedView.put("upsell_item_name", inventoryRecord.get("upsell_item") );
-                    joinedView.put("item_cart_count", aggregateCartCountForObject );
-                    return joinedView;
-
-
-              }
-            });   
-
-
-        KStream<String, GenericRecord> unmodifiedStream_tempAggCountsWithInventoryStream = tempAggCountsWithInventoryStream.peek(
-            new ForeachAction<String, GenericRecord>() {
-              @Override
-              public void apply(String key, GenericRecord value) {
-                System.out.println("Join >>> key=" + key + ", value=" + value);
-              }
-            });        
-
-                 
-
-
-        KGroupedStream<String, GenericRecord> aggCountsWithInventoryGroupedStream = tempAggCountsWithInventoryStream.groupByKey();
+        		final GenericRecord joinedView = new GenericData.Record( top_cart_upsells_schema );
+        		joinedView.put("item_name", cart );
+        		joinedView.put("upsell_item_name", upsell );
+        		joinedView.put("item_cart_count", 1L );
+        		return joinedView;
+        		
+        	}
+        	
+        });
         
-        KTable<String, GenericRecord> joinedKTable = aggCountsWithInventoryGroupedStream.reduce(
-            new Reducer<GenericRecord>() {
-               public GenericRecord apply(GenericRecord left, GenericRecord right) {
-                // since there should be no duplicates, just take the one that is not null
-
-                System.out.println( "Reduce >> " + (String)( left.get("item_name").toString() ) );
-
-                if (null != left && null != right) {
-
-                    int left_count = Integer.valueOf( (String)(left.get("item_cart_count").toString()) );
-                    int right_count = Integer.valueOf( (String)(right.get("item_cart_count").toString()) );
-
-                    if (left_count > right_count) {
-                        return left;
-                    } else {
-                        return right;
-                    }
-
-                }
-
-
-                if (null != left) {
-                 return left;
-                }
-
-                // else, return the other one
-                return right;
-               }
-             }
-
-            );
-
-
-        KStream<String, GenericRecord> unmodifiedStreamJoinedKTable = joinedKTable.toStream().peek(
-            new ForeachAction<String, GenericRecord>() {
-              @Override
-              public void apply(String key, GenericRecord value) {
-                System.out.println("Joined KTable >>> key=" + key + ", value=" + value);
-              }
-            });        
-
+        // create TimeWindow for windowing operation (here it has been set to a minute with a grace period of 10 seconds)
+        TimeWindows window = TimeWindows.of(Duration.ofMinutes(1)).grace(Duration.ofSeconds(0));
         
-        // stream.to(outputTopic, Produced.with(stringSerde, genericAvroSerde));
-              
-        joinedKTable.toStream().to( "top_cart_upsells", Produced.with( stringSerde, valueGenericAvroSerde ) );
- 
-
-
-
+        // create windowed KTable that groups items by key and counts based on a 1-minute window
+        // .suppress is needed so that only the final results of a window are sent out
+      final KTable<Windowed<String>, GenericRecord> joinedKTable = enrichedCartObjects
+    		  .groupByKey(Grouped.with(Serdes.String(), valueGenericAvroSerde))
+    		  .windowedBy(window)
+    		  .reduce(new Reducer<GenericRecord>() {
+    			  @Override
+    			  public GenericRecord apply(GenericRecord aggValue, GenericRecord newValue) {
+    		
+    				  Long lCount = Long.valueOf(aggValue.get("item_cart_count").toString());
+    				  Long rCount = Long.valueOf(newValue.get("item_cart_count").toString());
+    				  Long total = lCount + rCount;
+    		    		
+    				  aggValue.put("item_cart_count", total);
+    				  
+    				  return aggValue;
+    			  }
+    		  })
+    		  .suppress(Suppressed.untilWindowCloses(Suppressed.BufferConfig.unbounded()));
+      
+      // KStream used to output data to System.out
+      final KStream<Windowed<String>, GenericRecord> outputStream = joinedKTable.toStream()
+        .peek(new ForeachAction<Windowed<String>, GenericRecord>() {
+        	@Override
+        	public void apply(Windowed<String> key, GenericRecord value) {
+      		  // outputting to System.out here
+			  // optionally, this could be done through outputting to a Kafka topic
+			  // in the end, all we need is:
+			  // 		current time
+			  //		how many of each item are in carts in the store
+			  //		the upsell items for the items in carts
+			  LocalDateTime now = LocalDateTime.now();
+			  String item = value.get("item_name").toString();
+			  String count = value.get("item_cart_count").toString();
+			  String upsell = value.get("upsell_item_name").toString();
+			  
+			  // longest string is "tennis racket" at 13 characters
+			  // set spacing to 15 characters
+			  int diff = 15 - item.length();
+			  
+			  // determine space after item so counts line up
+			  String space = "";
+			  for(int i = 0; i < diff; i++) {
+				  space += " ";
+			  }
+			  
+			  System.out.println(dtf.format(now) + "\t" + "item: " + item + space + "count: " + count + "\t" + "upsell: " + upsell);
+			}
+        });
 
         final KafkaStreams streams = new KafkaStreams(builder.build(), props);
         final CountDownLatch latch = new CountDownLatch(1);
@@ -338,12 +291,14 @@ public class StreamingJoin_CartCountsAndInventoryTopics {
             System.out.println( "Starting JOIN Streaming App..." );
 
             // debug reset code!
-  //          streams.cleanUp();
+            streams.cleanUp();
             streams.start();
             latch.await();
         } catch (Throwable e) {
             System.exit(1);
         }
+        
+        producer.close();
 
         System.exit(0);
 
