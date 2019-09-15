@@ -1,0 +1,25 @@
+mysql -u root --password="mypassword"
+
+CREATE DATABASE big_cloud_dealz;
+USE big_cloud_dealz;
+
+CREATE TABLE inventory (
+ id serial NOT NULL PRIMARY KEY,
+ name varchar(100),
+ upsell_item varchar(200),
+ count INT,
+ modified timestamp default CURRENT_TIMESTAMP NOT NULL,
+ INDEX `modified_index` (`modified`)
+ );
+
+INSERT INTO inventory (name, upsell_item, count) VALUES ('cup', 'plate', 100);
+INSERT INTO inventory (name, upsell_item, count) VALUES ('bowl', 'cup', 10);
+INSERT INTO inventory (name, upsell_item, count) VALUES ('fork', 'spoon', 200);
+
+INSERT INTO inventory (name, upsell_item, count) VALUES ('spoon', 'fork', 10);
+INSERT INTO inventory (name, upsell_item, count) VALUES ('sports ball', 'soccer goal', 2);
+INSERT INTO inventory (name, upsell_item, count) VALUES ('tennis racket', 'tennis ball', 10);
+INSERT INTO inventory (name, upsell_item, count) VALUES ('frisbee', 'frisbee goal', 100);
+
+
+exit; 

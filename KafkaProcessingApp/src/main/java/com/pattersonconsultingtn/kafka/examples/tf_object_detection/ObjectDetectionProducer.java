@@ -78,6 +78,7 @@ public class ObjectDetectionProducer {
   private Schema schema = null;
   private final String topicName = "shopping_cart_objects";
   private final String topicKey = "camera_0"; // sensorID
+  private final String labelFilePath = "/Users/josh/Documents/workspace/PattersonConsulting/BigCloudDealz_GreenLightSpecial/src/main/resources/";
   private final String schemaString = "{\"namespace\": \"com.pattersonconsulting.kafka.avro\", " +
                             "\"type\": \"record\", " +
                            "\"name\": \"" + topicName + "\"," +
@@ -172,8 +173,13 @@ public class ObjectDetectionProducer {
 
   public void scanAllFilesInDirectory(File file) throws Exception, IOException {
 
-    String modelFile = "/Users/paulharris/Downloads/ssd_inception_v2_coco_2018_01_28/saved_model/";
-    String labelMapFile = "/Users/paulharris/PattersonConsulting/BigCloudDealz_GreenLightSpecial/src/main/resources/mscoco_label_map.pbtxt.txt";
+    //String modelFile = "/Users/paulharris/Downloads/ssd_inception_v2_coco_2018_01_28/saved_model/";
+    String modelFile = "/Users/josh/Downloads/faster_rcnn_resnet101_coco_2018_01_28/saved_model/";
+    // String labelMapFile = "/Users/paulharris/PattersonConsulting/BigCloudDealz_GreenLightSpecial/src/main/resources/mscoco_label_map.pbtxt.txt";
+    String labelMapFile = labelFilePath + "mscoco_label_map.pbtxt.txt";
+
+    System.out.println( "model file: " + modelFile );
+    System.out.println( "labels file: " + labelMapFile );
 
     TFVision_ObjectDetection imageScanner = new TFVision_ObjectDetection();
 

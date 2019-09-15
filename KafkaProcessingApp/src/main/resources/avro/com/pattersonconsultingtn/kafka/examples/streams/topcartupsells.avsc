@@ -1,0 +1,9 @@
+{"namespace": "com.pattersonconsultingtn.kafka.examples.streams.avro",
+ "type": "record",
+ "name": "TopCartUpsells",
+ "fields": [
+     {"name": "item_name", "type": "string"},
+     {"name": "upsell_item_name", "type": "string"},
+     {"name": "item_cart_count", "type": "long"}
+ ]
+}
