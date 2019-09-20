@@ -130,7 +130,7 @@ public class TestDetectionProducer {
 	        System.out.println( "done..." );
 	    	
 	      try{
-	       Thread.sleep(5000);
+	       Thread.sleep(15000);
 	      }
 	      catch(InterruptedException ex){
 	       Thread.currentThread().interrupt();
