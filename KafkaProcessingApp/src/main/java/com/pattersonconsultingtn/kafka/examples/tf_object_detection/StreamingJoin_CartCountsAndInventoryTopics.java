@@ -221,7 +221,7 @@ public class StreamingJoin_CartCountsAndInventoryTopics {
         	
         });
         
-        // create TimeWindow for windowing operation (here it has been set to a minute with a grace period of 10 seconds)
+        // create TimeWindow for windowing operation (here it has been set to a minute with a grace period of 0 seconds)
         TimeWindows window = TimeWindows.of(Duration.ofMinutes(1)).grace(Duration.ofSeconds(0));
         
         // create windowed KTable that groups items by key and counts based on a 1-minute window
