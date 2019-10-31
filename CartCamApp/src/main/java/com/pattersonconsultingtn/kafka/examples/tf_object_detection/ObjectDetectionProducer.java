@@ -83,9 +83,6 @@ mvn exec:java -Dexec.mainClass="com.pattersonconsultingtn.kafka.examples.tf_obje
   -Dexec.args="/Users/josh/Downloads/faster_rcnn_resnet101_coco_2018_01_28/saved_model/"
 
 
-mvn exec:java -Dexec.mainClass="com.pattersonconsultingtn.kafka.examples.tf_object_detection.ObjectDetectionProducer" \
-  -Dexec.args="10 http://localhost:8081"
-
 
 */
 public class ObjectDetectionProducer {
@@ -97,7 +94,6 @@ public class ObjectDetectionProducer {
   private boolean sendEventsToKafka = false;
   private String schemaRegistryUrl = "";
 
-  // private final String labelFilePath = "/Users/josh/Documents/workspace/PattersonConsulting/BigCloudDealz_GreenLightSpecial/src/main/resources/";
   private final String labelFilePath = "./src/main/resources/";
   private final static String testImagesFilePath = "./src/main/resources/cart_images/";
 
@@ -120,12 +116,6 @@ public class ObjectDetectionProducer {
 
 
   public static void main(String[] args){
-    /*
-    if (args.length != 3) {
-      System.out.println("Please provide command line arguments: numEvents schemaRegistryUrl folder");
-      System.exit(-1);
-    }
-    */
 
     String modelFilePath = "";
     if (args.length > 0 ) {
@@ -144,26 +134,14 @@ public class ObjectDetectionProducer {
     }
 
 
-    //long events = Long.parseLong(args[0]);
-    // String url = args[0];
-    // String input_folder = args[2];
 
-
-/*
-        System.out.println(System.getProperty("user.dir"));
-
-        // Java 7
-        System.out.println("Current working dir: " + Paths.get("").toAbsolutePath().toString());    
-*/
     ObjectDetectionProducer cv_producer = new ObjectDetectionProducer();
-    // cv_producer.run( url, input_folder );
     cv_producer.run( kafkaSchemaURL, modelFilePath, testImagesFilePath );
 
   }
 
   public void run(String url, String modelFilePath, String input_folder) {
 
-    //String modelFilePath = ""; //"/Users/josh/Downloads/faster_rcnn_resnet101_coco_2018_01_28/saved_model/";
 
     if (url != "") {
       // System.out.println("Please provide command line arguments: schemaRegistryUrl");
@@ -244,9 +222,6 @@ public class ObjectDetectionProducer {
 
   public void scanAllFilesInDirectory(File file, String modelFilePath) throws Exception, IOException {
 
-    //String modelFile = "/Users/paulharris/Downloads/ssd_inception_v2_coco_2018_01_28/saved_model/";
-    //String modelFile = "/Users/josh/Downloads/faster_rcnn_resnet101_coco_2018_01_28/saved_model/";
-    // String labelMapFile = "/Users/paulharris/PattersonConsulting/BigCloudDealz_GreenLightSpecial/src/main/resources/mscoco_label_map.pbtxt.txt";
     String labelMapFile = labelFilePath + "mscoco_label_map.pbtxt.txt";
 
     System.out.println( "\nmodel file: " + modelFilePath );
@@ -257,7 +232,6 @@ public class ObjectDetectionProducer {
 
     System.out.println( "Scanning all existing files in: " + file + "\n" );
 
-    //File folder = null; // !
 
     File[] files = file.listFiles(new FilenameFilter() {
       public boolean accept(File dir, String name) {

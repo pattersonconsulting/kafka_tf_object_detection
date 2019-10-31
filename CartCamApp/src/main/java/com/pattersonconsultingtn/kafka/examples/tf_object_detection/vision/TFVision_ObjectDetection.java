@@ -110,10 +110,8 @@ public class TFVision_ObjectDetection  {
       final String[] labels = TFModelUtils.loadLabels( labelMapFile ); //args[1]);
       try (SavedModelBundle model = SavedModelBundle.load( modelFile, "serve" )) {
         //printSignature( model );
-        //for (int arg = 2; arg < args.length; arg++) {
           final String filename = inputImageFile; //[arg];
           List<Tensor<?>> outputs = null;
-          //this.outputs = null;
           try (Tensor<UInt8> input = TFModelUtils.makeImageTensor( filename )) {
             outputs =
                 model
